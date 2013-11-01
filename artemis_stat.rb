@@ -81,17 +81,11 @@ class ArtemisStats < Sensu::Plugin::Metric::CLI::Graphite
     :long => "--attributes attributes",
     :description => "The attributes that need to be checked"
   
-  option :crit,
-    :short => "-c ",
-    :long => "--crit Critical",
-    :description => "Alerting A Critical Status",
-    :default => 0
-
   def run
-    atr = config[:attributes].split(',')
+    atr = config[:attributes].split(",").map(&:strip) #split and remove any whitespaces
     apiMetrics = JSON.parse getJsonfromApi
     apiMetrics['value'].each do |k,v|
-      output "#{k}#{v}"  if atr.include?(k)
+      output config[:scheme], k, v if atr.include?(k) #output results if in the list of attrs given
     end
     ok
   end
