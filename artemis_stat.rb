@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby -w
+#!/usr/bin/env ruby
 
 require 'rubygems' if RUBY_VERSION < '1.9.0'
 require 'sensu-plugin/metric/cli'
@@ -81,15 +81,6 @@ class ArtemisStats < Sensu::Plugin::Metric::CLI::Graphite
     :long => "--attributes attributes",
     :description => "The attributes that need to be checked"
   
-  def run
-    atr = config[:attributes].split(",").map(&:strip) #split and remove any whitespaces
-    apiMetrics = JSON.parse getJsonfromApi
-    apiMetrics['value'].each do |k,v|
-      output config[:scheme], k, v if atr.include?(k) #output results if in the list of attrs given
-    end
-    ok
-  end
-
   def getJsonfromApi
     headerValue = config[:header_value]
     password = config[:password]
@@ -129,4 +120,14 @@ class ArtemisStats < Sensu::Plugin::Metric::CLI::Graphite
       critical message("Error: #{res.code} recieved from #{host}.")
     end
   end
+
+  def run
+    atr = config[:attributes].split(",").map(&:strip) #split and remove any whitespaces
+    apiMetrics = JSON.parse getJsonfromApi
+    apiMetrics['value'].each do |key, value|
+      output [config[:scheme], key].join("."), value if atr.include?(key) #output results if in the list of attrs given
+    end
+    ok
+  end
+
 end # end of class
