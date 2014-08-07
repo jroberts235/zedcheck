@@ -18,6 +18,7 @@ require 'sensu-plugin/check/cli'
 require 'json'
 require 'net/http'
 require 'openssl'
+require 'pp'
 
 class PubApiCheck < Sensu::Plugin::Check::CLI
 
@@ -50,7 +51,7 @@ class PubApiCheck < Sensu::Plugin::Check::CLI
     :default => nil
 
   option :header,
-    :long => "--header value",
+    :long => "--header VALUE",
     :description => "Addition header to include in request",
     :default => "X-NG-PAK"
 
@@ -58,6 +59,12 @@ class PubApiCheck < Sensu::Plugin::Check::CLI
     :short => "-v value",
     :long => "--header_value value",
     :description => "The value of the addition header",
+    :default => nil
+
+  option :metric,
+    :short => "-m METRIC",
+    :long => "--metric METRIC",
+    :description => "Get a specific metric",
     :default => nil
 
   option :ssl,
@@ -95,6 +102,10 @@ class PubApiCheck < Sensu::Plugin::Check::CLI
     @apiMetrics = {
       'pubapi'=> stats
     }
+    
+    pp @apiMetrics if config[:debug] == true
+
+    pp @apiMetrics['pubapi'][config[:metric]] if config[:metric]
 
     # find the stats for specific metrics in the apiMetrics hash
     scannerCycleFinish = getMetricifExists('wl.scanner.cycle','lastFinishSec')
@@ -102,13 +113,8 @@ class PubApiCheck < Sensu::Plugin::Check::CLI
     catalogCacheUpdate = getMetricifExists('wl.catalog.cache.update','lastFinishSec') 
     catalogCacheUpdateFailures = getMetricifExists('wl.catalog.cache.update.failures','lastFinishSec') 
 
-    if config[:debug] == true
-      p "scannerCycleFinish = #{scannerCycleFinish}"
-      p "scannerReadFailure = #{scannerReadFailure}"
-      p "catalogCacheUpdate = #{catalogCacheUpdate}"
-      p "catalogCacheUpdateFailures = #{catalogCacheUpdateFailures}"
-    end
-  
+    #value.each { |k,v| pp "#{k} #{v}" } if config[:debug] == true
+
     # assay section
     if scannerCycleFinish 
       if (timestamp - 3600) > scannerCycleFinish
